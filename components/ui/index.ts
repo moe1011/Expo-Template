@@ -1,0 +1,1 @@
+export { Text, Header, Paragraph } from './Text'; 
