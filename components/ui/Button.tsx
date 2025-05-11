@@ -43,17 +43,17 @@ export function Button({
   }, [disabled, onPress]);
 
   // Common classes
-  const baseClasses = `rounded-lg active:opacity-80 flex-row justify-center items-center`;
+  const baseClasses = `active:opacity-80 flex-row justify-center items-center`;
   const disabledClasses = disabled ? 'opacity-50' : '';
 
   // Size specific classes
   const sizePaddingClasses = 
     size === 'sm' ? 'px-2 py-1' : 
-    size === 'lg' ? 'px-6 py-3' : 
+    size === 'lg' ? 'px-8 py-4' : 
     'px-4 py-2';
   const textSizeClasses = 
     size === 'sm' ? 'text-sm' : 
-    size === 'lg' ? 'text-lg' : 
+    size === 'lg' ? 'text-xl' : 
     'text-base';
 
   // Conditional rendering based on variant
@@ -62,7 +62,7 @@ export function Button({
       const textClasses = `text-center font-bold text-white ${textSizeClasses}`;
       return (
         <Pressable 
-          className={`${baseClasses} ${sizePaddingClasses} bg-primary ${disabledClasses} ${className}`}
+          className={`${baseClasses} rounded-full ${sizePaddingClasses} bg-primary ${disabledClasses} ${className}`}
           onPress={handlePress}
           disabled={disabled}
         >
@@ -81,7 +81,7 @@ export function Button({
       const textClasses = `text-center font-bold text-primary ${textSizeClasses}`;
       return (
         <Pressable 
-          className={`${baseClasses} ${sizePaddingClasses} bg-secondary ${disabledClasses} ${className}`}
+          className={`${baseClasses} rounded-full ${sizePaddingClasses} bg-secondary ${disabledClasses} ${className}`}
           onPress={handlePress}
           disabled={disabled}
         >
@@ -100,7 +100,7 @@ export function Button({
       const textClasses = `text-center font-medium text-primary ${textSizeClasses}`;
       return (
         <Pressable 
-          className={`${baseClasses} ${sizePaddingClasses} bg-transparent border border-primary ${disabledClasses} ${className}`}
+          className={`${baseClasses} rounded-lg ${sizePaddingClasses} bg-transparent border border-primary ${disabledClasses} ${className}`}
           onPress={handlePress}
           disabled={disabled}
         >
@@ -120,7 +120,7 @@ export function Button({
       const textClasses = `text-center font-medium text-primary ${textSizeClasses}`;
       return (
         <Pressable 
-          className={`${baseClasses} ${sizePaddingClasses} bg-transparent ${disabledClasses} ${className}`}
+          className={`${baseClasses} rounded-lg ${sizePaddingClasses} bg-transparent ${disabledClasses} ${className}`}
           onPress={handlePress}
           disabled={disabled}
         >
