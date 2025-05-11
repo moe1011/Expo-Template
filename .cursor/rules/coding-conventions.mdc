@@ -1,0 +1,104 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Coding Conventions - Expo Template
+
+## Package Management
+
+This project uses Bun instead of npm or yarn. The commands are similar but typically faster:
+
+```bash
+# Install all dependencies
+bun install
+
+# Add a new dependency
+bun add package-name
+
+# Add a development dependency
+bun add -d package-name
+
+# Run a script defined in package.json
+bun run <script-name>
+
+# Run development server
+bun run start
+```
+
+## Naming Conventions
+
+- Use **PascalCase** for React components and their files
+- Use **camelCase** for variables, functions, hooks, and non-component files
+- Use **UPPER_SNAKE_CASE** for constants
+- Prefix custom hooks with `use` (e.g., `useAuth`)
+- Suffix context providers with `Provider` (e.g., `AuthProvider`)
+- Suffix store files with `Store` (e.g., `userStore.ts`)
+
+## File Structure
+
+### Component Structure
+- Each component should be in its own file
+- Complex components should have their own directory with an `index.ts` file that exports the component
+- Component directories can contain sub-components used only by the main component
+
+Example:
+```
+/components/ui/Button/
+  index.ts           # Exports the Button component
+  Button.tsx         # Main component
+  ButtonText.tsx     # Sub-component
+  Button.styles.ts   # Component-specific styles
+```
+
+### Hook Structure
+- Custom hooks should be placed in the `/hooks` directory
+- Domain-specific hooks can be organized in subdirectories
+
+## Code Style
+
+### TypeScript
+- Always use proper TypeScript types
+- Define interfaces/types in the same file if specific to one component
+- Place shared types in a separate `/types` directory
+- Use type inference when possible to reduce verbosity
+
+### Components
+- Use functional components with React hooks
+- Extract complex logic into custom hooks
+- Keep components focused on a single responsibility
+- Use memo and callback optimizations for performance-critical components
+
+### State Management
+- Use Zustand for global application state
+- Use React's built-in useState/useReducer for local component state
+- Separate UI state from business logic
+- Minimize prop drilling by using context or global state
+
+## Styling Approach
+
+- Use NativeWind for styling with Tailwind utility classes
+- Use the `className` prop instead of StyleSheet for consistent styling
+- Extract repetitive styles into reusable utility classes in the theme
+- Use the `style` prop only for dynamic styles that can't be expressed in Tailwind
+
+## Performance Considerations
+
+- Use the FlashList component for long lists instead of FlatList
+- Implement proper list item rendering optimizations
+- Lazy load components and assets when appropriate
+- Minimize re-renders by using memo and useCallback
+- Use proper key props in lists
+
+## API and Data Management
+
+- Use TanStack Query for API calls and caching
+- Organize API calls by domain/feature in separate files
+- Handle loading, error, and success states consistently
+
+## Error Handling
+
+- Implement proper try/catch blocks for async operations
+- Use error boundaries for component-level error handling
+- Log errors with appropriate context for debugging
+- Provide user-friendly error messages

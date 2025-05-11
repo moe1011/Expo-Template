@@ -1,0 +1,182 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# State Management - Expo Template
+
+## State Management Architecture
+
+This template uses a hybrid state management approach with:
+
+1. **Zustand**: For global application state
+2. **React's useState/useReducer**: For local component state
+3. **TanStack Query**: For server state and data fetching
+4. **MMKV**: For persistent storage
+
+## Zustand Store Structure
+
+### Store Organization
+
+Stores should be organized by domain and follow a modular approach:
+
+```
+/stores
+  /user
+    userStore.ts
+    userSelectors.ts
+  /settings
+    settingsStore.ts
+    settingsSelectors.ts
+  /app
+    appStore.ts
+    appSelectors.ts
+```
+
+### Store Implementation
+
+```tsx
+// userStore.ts
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { mmkvStorage } from '../utils/storage';
+
+interface UserState {
+  user: User | null;
+  isAuthenticated: boolean;
+  
+  // Actions
+  login: (credentials: Credentials) => Promise<void>;
+  logout: () => void;
+  updateProfile: (data: Partial<User>) => Promise<void>;
+}
+
+export const useUserStore = create<UserState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      isAuthenticated: false,
+      
+      login: async (credentials) => {
+        // Implementation
+        set({ user: userData, isAuthenticated: true });
+      },
+      
+      logout: () => {
+        set({ user: null, isAuthenticated: false });
+      },
+      
+      updateProfile: async (data) => {
+        // Implementation
+        set((state) => ({ 
+          user: state.user ? { ...state.user, ...data } : null 
+        }));
+      },
+    }),
+    {
+      name: 'user-storage',
+      storage: createJSONStorage(() => mmkvStorage),
+    }
+  )
+);
+
+// userSelectors.ts
+export const useUser = () => useUserStore((state) => state.user);
+export const useIsAuthenticated = () => useUserStore((state) => state.isAuthenticated);
+```
+
+## State Management Guidelines
+
+### When to Use Each Solution
+
+- **Zustand**: For state that needs to be accessed by multiple components across the app
+- **useState/useReducer**: For component-specific state that doesn't need to be shared
+- **TanStack Query**: For all API calls, server state, and cached data
+- **MMKV**: For persisting state that needs to survive app restarts
+
+### State Organization Principles
+
+1. **Separation of Concerns**: Divide state into logical domains
+2. **Single Source of Truth**: Avoid duplicating state across different stores
+3. **Immutability**: Never directly mutate state
+4. **Minimize State**: Only store what's necessary
+5. **Derive When Possible**: Calculate derived state instead of storing it
+
+### Performance Optimization
+
+- Use selectors to prevent unnecessary re-renders
+- Split stores into smaller chunks for better performance
+- Use middleware for side effects and persistence
+- Implement proper memoization where needed
+
+## TanStack Query Integration
+
+```tsx
+// api/queries/useUsers.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../../utils/supabase';
+
+export const useUsers = () => {
+  return useQuery({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('users').select('*');
+      if (error) throw error;
+      return data;
+    },
+  });
+};
+
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (userData) => {
+      const { data, error } = await supabase
+        .from('users')
+        .update(userData)
+        .eq('id', userData.id);
+        
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+};
+```
+
+## MMKV Storage Integration
+
+```tsx
+// utils/storage.ts
+import { MMKV } from 'react-native-mmkv';
+
+export const storage = new MMKV({
+  id: 'app-storage',
+  encryptionKey: 'your-encryption-key',
+});
+
+export const mmkvStorage = {
+  getItem: (key) => {
+    const value = storage.getString(key);
+    return value ? JSON.parse(value) : null;
+  },
+  setItem: (key, value) => {
+    storage.set(key, JSON.stringify(value));
+  },
+  removeItem: (key) => {
+    storage.delete(key);
+  },
+};
+```
+
+## Best Practices
+
+1. Always use TypeScript interfaces for state
+2. Keep actions and state together in the same store
+3. Write selectors for accessing state to optimize re-renders
+4. Use middleware for side effects (e.g., logging, persistence)
+5. Test stores and selectors in isolation
+6. Document the purpose of each store and its API

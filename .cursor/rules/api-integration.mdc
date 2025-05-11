@@ -1,0 +1,434 @@
+---
+description: Database stuff, mcp
+globs: 
+alwaysApply: false
+---
+# API Integration - Expo Template
+
+## Backend Architecture
+
+This template uses [Supabase](mdc:https:/supabase.com) as the backend service with authentication and TanStack Query for data fetching and caching.
+
+## Supabase Setup
+
+### Client Configuration
+
+```tsx
+// utils/supabase.ts
+import 'react-native-url-polyfill/auto';
+import { createClient } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/api';
+
+// Create Supabase client
+export const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  {
+    auth: {
+      storage: AsyncStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+  }
+);
+```
+
+### Auth Context
+
+```tsx
+// context/AuthContext.tsx
+import { createContext, useContext, useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '../utils/supabase';
+
+interface AuthContextType {
+  session: Session | null;
+  user: User | null;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }) {
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Auth methods
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
+  };
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  };
+
+  const value = {
+    session,
+    user,
+    loading,
+    signIn,
+    signUp,
+    signOut,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+```
+
+## TanStack Query Integration
+
+### Query Client Setup
+
+```tsx
+// utils/queryClient.ts
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1 minute
+      cacheTime: 60 * 60 * 1000, // 1 hour
+      retry: 2,
+      refetchOnWindowFocus: false,
+      refetchOnMount: true,
+    },
+  },
+});
+```
+
+### Provider Setup
+
+```tsx
+// app/_layout.tsx
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '../utils/queryClient';
+import { AuthProvider } from '../context/AuthContext';
+
+export default function RootLayout() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        {/* Rest of your app */}
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+```
+
+## API Hooks
+
+### Data Fetching with TanStack Query
+
+```tsx
+// hooks/api/useItems.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../../utils/supabase';
+
+// Types
+interface Item {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  created_at: string;
+}
+
+// Get all items
+export function useItems() {
+  return useQuery({
+    queryKey: ['items'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('items')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      return data as Item[];
+    },
+  });
+}
+
+// Get a single item by ID
+export function useItem(id: string) {
+  return useQuery({
+    queryKey: ['items', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('items')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) throw error;
+      return data as Item;
+    },
+    enabled: !!id, // Only run if ID is provided
+  });
+}
+
+// Create a new item
+export function useCreateItem() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (newItem: Omit<Item, 'id' | 'created_at'>) => {
+      const { data, error } = await supabase
+        .from('items')
+        .insert(newItem)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return data as Item;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+    },
+  });
+}
+
+// Update an item
+export function useUpdateItem() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Item> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('items')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      return data as Item;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['items', data.id] });
+    },
+  });
+}
+
+// Delete an item
+export function useDeleteItem() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('items')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: (id) => {
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.setQueryData(['items', id], undefined);
+    },
+  });
+}
+```
+
+## Real-time Data
+
+```tsx
+// hooks/api/useRealtimeItems.ts
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../../utils/supabase';
+import { useItems } from './useItems';
+
+export function useRealtimeItems() {
+  const queryClient = useQueryClient();
+  const { data: items, ...rest } = useItems();
+  
+  useEffect(() => {
+    const channel = supabase
+      .channel('table-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'items',
+        },
+        (payload) => {
+          // Update the query data based on the change type
+          queryClient.invalidateQueries({ queryKey: ['items'] });
+          
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            queryClient.invalidateQueries({ 
+              queryKey: ['items', payload.new.id] 
+            });
+          }
+        }
+      )
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+  
+  return { data: items, ...rest };
+}
+```
+
+## Usage in Components
+
+```tsx
+// app/items.tsx
+import { View, Text, FlatList } from 'react-native';
+import { useItems, useDeleteItem } from '../hooks/api/useItems';
+import { ItemCard } from '../components/ItemCard';
+
+export default function ItemsScreen() {
+  const { data: items, isLoading, error } = useItems();
+  const deleteItem = useDeleteItem();
+  
+  if (isLoading) {
+    return <LoadingIndicator />;
+  }
+  
+  if (error) {
+    return <ErrorDisplay message={error.message} />;
+  }
+  
+  const handleDelete = (id: string) => {
+    deleteItem.mutate(id);
+  };
+  
+  return (
+    <View className="flex-1 p-4">
+      <Text className="text-2xl font-sans-bold mb-4">Items</Text>
+      
+      <FlatList
+        data={items}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <ItemCard 
+            item={item} 
+            onDelete={() => handleDelete(item.id)} 
+          />
+        )}
+      />
+    </View>
+  );
+}
+```
+
+## File Upload
+
+```tsx
+// hooks/api/useStorage.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '../../utils/supabase';
+import * as FileSystem from 'expo-file-system';
+
+interface UploadOptions {
+  filePath: string;
+  bucket: string;
+  storagePath: string;
+  contentType?: string;
+}
+
+export function useUploadFile() {
+  return useMutation({
+    mutationFn: async ({ filePath, bucket, storagePath, contentType }: UploadOptions) => {
+      const fileInfo = await FileSystem.getInfoAsync(filePath);
+      if (!fileInfo.exists) {
+        throw new Error('File does not exist');
+      }
+      
+      const fileExt = filePath.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const fullPath = `${storagePath}/${fileName}`;
+      
+      const formData = new FormData();
+      // @ts-ignore
+      formData.append('file', {
+        uri: filePath,
+        name: fileName,
+        type: contentType || `image/${fileExt}`,
+      });
+      
+      const { data, error } = await supabase
+        .storage
+        .from(bucket)
+        .upload(fullPath, formData);
+        
+      if (error) throw error;
+      
+      // Get public URL
+      const { data: { publicUrl } } = supabase
+        .storage
+        .from(bucket)
+        .getPublicUrl(fullPath);
+        
+      return { path: fullPath, url: publicUrl };
+    },
+  });
+}
+```
+
+## Best Practices
+
+1. **Error Handling**: Implement proper error handling in all API calls
+2. **Loading States**: Show loading indicators during data fetching
+3. **Optimistic Updates**: Use optimistic updates for a better UX
+4. **Query Invalidation**: Invalidate queries correctly when data changes
+5. **Prefetching**: Prefetch data when you expect users to need it soon
+6. **TypeScript**: Use proper TypeScript types for all API responses
+7. **Retry Logic**: Set up proper retry logic for failed requests
+8. **Offline Support**: Consider implementing offline support with TanStack Query
+9. **Pagination**: Implement proper pagination for large datasets
+10. **Rate Limiting**: Be mindful of API rate limits

@@ -1,0 +1,160 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Component Usage Patterns
+
+This rule describes how to use and structure components in the Expo template app.
+
+## Component Organization
+
+Components are organized into three main directories:
+
+- `/components/ui` - Base UI components (buttons, text, inputs)
+- `/components/layout` - Layout components (containers, sections)
+- `/components/features` - Feature-specific components 
+
+## Base UI Components
+
+### Button Component
+
+The Button component ([Button.tsx](mdc:components/ui/Button.tsx)) supports:
+
+```tsx
+// Available props:
+interface ButtonProps {
+  onPress: () => void;          // Required: Function to call on press
+  title?: string;               // Optional: Button text (alternative to children)
+  children?: ReactNode;         // Optional: Custom button content
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost'; // Optional: Button style
+  size?: 'sm' | 'md' | 'lg';    // Optional: Button size
+  disabled?: boolean;           // Optional: Disabled state
+  className?: string;           // Optional: Additional Tailwind classes
+  showArrow?: boolean;          // Optional: Show arrow on the right
+}
+
+// Example usage:
+<Button
+  title="Create account"
+  variant="secondary"
+  size="lg"
+  showArrow={true}
+  onPress={() => router.push("/(auth)/signup")}
+/>
+```
+
+### Text Components
+
+Text components ([Text.tsx](mdc:components/ui/Text.tsx)) include:
+
+```tsx
+// These components are exported from the ui index
+import { Header, Paragraph } from "../components/ui";
+
+// Header - for titles and headings
+<Header className="text-primary font-semibold text-4xl mb-2">
+  Welcome
+</Header>
+
+// Paragraph - for body text
+<Paragraph className="text-base mb-8">
+  This is a sample text describing your app.
+</Paragraph>
+```
+
+## Layout Components
+
+### Container
+
+The Container component ([Container.tsx](mdc:components/layout/Container.tsx)) wraps content with consistent padding:
+
+```tsx
+import { Container } from "../components/layout/Container";
+
+<Container className="justify-start items-center pt-12 pb-8 px-6 flex-1">
+  {/* Content */}
+</Container>
+```
+
+## Navigation
+
+The app uses Expo Router for navigation, with routes defined in the `/app` directory:
+
+```tsx
+import { useRouter } from "expo-router";
+
+// In component:
+const router = useRouter();
+
+// Navigate to a screen:
+router.push("/(auth)/signup");
+
+// Replace current screen:
+router.replace("/home");
+```
+
+## Form Inputs
+
+Input fields are styled with Tailwind classes:
+
+```tsx
+<Text className="text-base font-medium text-black mb-2">
+  Email address
+</Text>
+<TextInput
+  placeholder="Your email"
+  className="border border-gray-300 rounded-lg p-3.5 text-base"
+  keyboardType="email-address"
+  autoCapitalize="none"
+/>
+```
+
+## Social Login Buttons
+
+For social login, use:
+
+```tsx
+// Import icons
+import { FontAwesome, AntDesign } from "@expo/vector-icons";
+import GoogleIcon from "../assets/images/google-icon.svg";
+
+// Example usage
+<Pressable className="flex-1 border border-gray-300 rounded-lg py-4 items-center">
+  <FontAwesome name="facebook" size={24} color="#1877F2" />
+</Pressable>
+
+<Pressable className="flex-1 border border-gray-300 rounded-lg py-4 items-center">
+  <GoogleIcon width={24} height={24} />
+</Pressable>
+
+<Pressable className="flex-1 border border-gray-300 rounded-lg py-4 items-center">
+  <AntDesign name="apple1" size={24} color="black" />
+</Pressable>
+```
+
+## Status Bar
+
+Use the Expo StatusBar component to ensure proper status bar styling:
+
+```tsx
+import { StatusBar } from 'expo-status-bar';
+
+// For dark backgrounds
+<StatusBar style="light" />
+
+// For light backgrounds
+<StatusBar style="dark" />
+```
+
+## SVG Integration
+
+SVG assets are imported and used as React components:
+
+```tsx
+import LogoIcon from '../assets/images/logo.svg';
+import ProfileIcon from '../assets/images/profile-icon.svg';
+
+// Usage
+<LogoIcon width={logoWidth} height={logoHeight} />
+```

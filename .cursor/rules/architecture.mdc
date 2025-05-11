@@ -1,0 +1,108 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Architecture and File Structure
+
+This rule describes the overall architecture, file organization, and best practices for the Expo template app.
+
+## App Structure
+
+The app follows the Expo Router file-based routing system, with key directories:
+
+```
+expo-template/
+├── app/               # Screens using Expo Router file-based routing
+│   ├── (auth)/        # Authentication screens (login, signup)
+│   ├── (tabs)/        # Main tab screens
+│   └── index.tsx      # Landing/entry screen
+├── assets/            # Static assets (images, fonts)
+├── components/        # React components
+│   ├── features/      # Feature-specific components
+│   ├── layout/        # Layout components
+│   └── ui/            # Base UI components
+├── hooks/             # React hooks
+│   ├── api/           # API-related hooks
+│   └── __tests__/     # Hook tests
+├── stores/            # Zustand stores
+└── utils/             # Helper functions
+```
+
+## Expo Router
+
+The app uses Expo Router for navigation, with directory structure determining routes:
+
+- `/app/index.tsx` - Root route (/)
+- `/app/(auth)/login.tsx` - Login route (/(auth)/login)
+- `/app/(auth)/signup.tsx` - Signup route (/(auth)/signup)
+
+The parentheses in folder names like `(auth)` indicate these are route groups rather than path segments.
+
+## Component Structure
+
+Components follow this organizational pattern:
+
+1. Base UI components in `/components/ui/`
+2. Layout components in `/components/layout/`
+3. Feature-specific components in `/components/features/`
+
+## State Management
+
+The app uses Zustand for state management, with stores located in the `/stores` directory.
+
+## Styling
+
+NativeWind v4 is used for styling, with Tailwind utility classes applied via the `className` prop.
+
+## Asset Management
+
+- SVG components are in `/assets/images/` and used directly as React components
+- Fonts are stored in `/assets/fonts/` and referenced via font family names
+
+## Dependencies
+
+The app uses Bun as the package manager:
+
+```bash
+# Installing dependencies
+bun install
+
+# Adding a new dependency
+bun add package-name
+
+# Adding a dev dependency
+bun add -d package-name
+```
+
+Key dependencies:
+- Expo and Expo Router
+- NativeWind v4
+- Zustand for state management
+- TanStack Query for remote data
+- Supabase for backend services
+
+## Screen Template
+
+New screens should follow this template structure:
+
+```tsx
+import { View, SafeAreaView, Text } from "react-native";
+import { Container } from "../components/layout/Container";
+import { Header, Paragraph } from "../components/ui";
+import { StatusBar } from 'expo-status-bar';
+import { useRouter } from "expo-router";
+
+export default function ScreenName() {
+  const router = useRouter();
+
+  return (
+    <SafeAreaView className="flex-1 bg-background">
+      <StatusBar style="dark" />
+      <Container className="px-5 py-6">
+        {/* Screen content */}
+      </Container>
+    </SafeAreaView>
+  );
+}
+```

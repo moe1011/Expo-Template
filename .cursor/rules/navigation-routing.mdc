@@ -1,0 +1,256 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Navigation & Routing - Expo Template
+
+## Navigation Architecture
+
+This template uses [Expo Router](mdc:https:/docs.expo.dev/router/introduction) for file-based navigation, which is built on top of React Navigation.
+
+## Directory Structure
+
+The routes are defined by the file structure in the `/app` directory:
+
+```
+/app
+  /_layout.tsx               # Root layout
+  /index.tsx                 # Home/Entry screen
+  /(tabs)                    # Tab navigator
+    /_layout.tsx             # Tab navigator configuration
+    /home.tsx                # Home tab
+    /profile.tsx             # Profile tab
+    /settings.tsx            # Settings tab
+  /(auth)                    # Authentication flow
+    /_layout.tsx             # Auth layout
+    /login.tsx               # Login screen
+    /signup.tsx              # Signup screen
+    /forgot-password.tsx     # Password recovery
+  /[id]                      # Dynamic routes
+    /index.tsx               # Detail screen (using id param)
+  /modal                     # Modal screens
+    /settings.tsx            # Settings modal
+```
+
+## Route Configuration
+
+### Root Layout (`/app/_layout.tsx`)
+
+```tsx
+import { Stack } from 'expo-router';
+import { useEffect } from 'react';
+import { useUserStore } from '../stores/userStore';
+import { LoadingScreen } from '../components/LoadingScreen';
+
+export default function RootLayout() {
+  const { isAuthenticated, isInitialized, initialize } = useUserStore();
+  
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+  
+  if (!isInitialized) {
+    return <LoadingScreen />;
+  }
+  
+  return (
+    <Stack>
+      <Stack.Screen 
+        name="(tabs)" 
+        options={{ headerShown: false }} 
+        redirect={!isAuthenticated}
+      />
+      <Stack.Screen 
+        name="(auth)" 
+        options={{ headerShown: false }} 
+        redirect={isAuthenticated}
+      />
+      <Stack.Screen 
+        name="modal" 
+        options={{ presentation: 'modal' }} 
+      />
+    </Stack>
+  );
+}
+```
+
+### Tab Layout (`/app/(tabs)/_layout.tsx`)
+
+```tsx
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import Colors from '../../constants/Colors';
+
+export default function TabLayout() {
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: Colors.primary,
+      }}>
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color }) => 
+            <Ionicons name="home" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) => 
+            <Ionicons name="person" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => 
+            <Ionicons name="settings" size={24} color={color} />,
+        }}
+      />
+    </Tabs>
+  );
+}
+```
+
+## Navigation Patterns
+
+### Screen Component Structure
+
+```tsx
+import { View, Text } from 'react-native';
+import { Link, useRouter } from 'expo-router';
+
+export default function HomeScreen() {
+  const router = useRouter();
+  
+  const navigateToDetail = (id: string) => {
+    router.push(`/${id}`);
+  };
+  
+  return (
+    <View className="flex-1 p-4">
+      <Text className="text-2xl font-bold">Home Screen</Text>
+      
+      {/* Declarative navigation */}
+      <Link href="/profile" className="text-blue-500">
+        Go to Profile
+      </Link>
+      
+      {/* Imperative navigation */}
+      <Button 
+        title="Open Settings Modal" 
+        onPress={() => router.push('/modal/settings')} 
+      />
+      
+      {/* Dynamic navigation */}
+      <Button 
+        title="View Item 123" 
+        onPress={() => navigateToDetail('123')} 
+      />
+    </View>
+  );
+}
+```
+
+### Passing Parameters
+
+#### Via URL Parameters
+
+```tsx
+// Navigate with parameters
+router.push({
+  pathname: '/[id]',
+  params: { id: '123', type: 'product' }
+});
+
+// Access parameters in the component
+import { useLocalSearchParams } from 'expo-router';
+
+export default function DetailScreen() {
+  const { id, type } = useLocalSearchParams();
+  
+  return (
+    <View>
+      <Text>ID: {id}</Text>
+      <Text>Type: {type}</Text>
+    </View>
+  );
+}
+```
+
+#### Via Navigation State
+
+```tsx
+// Navigate with state
+router.push({
+  pathname: '/details',
+  params: { 
+    state: JSON.stringify({ 
+      item: { id: '123', name: 'Product' } 
+    }) 
+  }
+});
+
+// Access state in the component
+import { useLocalSearchParams } from 'expo-router';
+
+export default function DetailScreen() {
+  const { state } = useLocalSearchParams();
+  const { item } = JSON.parse(state as string);
+  
+  return (
+    <View>
+      <Text>ID: {item.id}</Text>
+      <Text>Name: {item.name}</Text>
+    </View>
+  );
+}
+```
+
+## Authentication Flow
+
+The app uses a redirect-based authentication flow:
+
+1. Check authentication status in the root layout
+2. Redirect to auth screens if not authenticated
+3. Redirect to main app screens if authenticated
+
+## Deep Linking
+
+Configure deep linking in `app.json`:
+
+```json
+{
+  "expo": {
+    "scheme": "zums",
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://zums.app",
+          "routes": {
+            "profile": "user/profile",
+            "[id]": "item/:id"
+          }
+        }
+      ]
+    ]
+  }
+}
+```
+
+## Best Practices
+
+1. Use descriptive route names
+2. Keep route parameters minimal and typed
+3. Implement proper loading states during navigation
+4. Add proper error handling for missing routes
+5. Use route guards for protected routes
+6. Implement proper navigation animations
+7. Preserve scroll position when navigating back
+8. Lazy load screens for better performance
