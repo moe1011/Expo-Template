@@ -12,10 +12,14 @@ module.exports = {
       },
       colors: {
         primary: {
-          DEFAULT: '#3B82F6'
+          DEFAULT: '#25a0fb',
+          text: 'white'
         },
         secondary: {
-          DEFAULT: '#1F2937'
+          DEFAULT: 'white',
+          dark: 'black',
+          text: '#2ea8fc',
+          textDark: 'white'
         },
         success: {
           DEFAULT: '#10B981',
@@ -27,7 +31,9 @@ module.exports = {
           DEFAULT: '#EF4444',
         },
         background: {
-          DEFAULT: '#F9FAFB',
+          DEFAULT: '#7bc4ff',
+          dark: '#2d87d2',
+          secondary: '#25a0fb'
         },
         badge: {
           games: '#EDC7FF',
