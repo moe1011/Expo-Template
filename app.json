@@ -5,18 +5,20 @@
     "slug": "expo-template",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/expo-template-app-icon.png",
     "scheme": "expo-template",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.expotemplate"
+      "bundleIdentifier": "com.appname.app"
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/expo-template-app-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.yourcompany.expotemplate"
+      "package": "com.appname.app"
     },
     "web": {
       "bundler": "metro",
