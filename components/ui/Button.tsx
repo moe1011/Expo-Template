@@ -57,7 +57,7 @@ export function Button({
   // Size specific classes
   const sizePaddingClasses = 
     size === 'sm' ? 'px-2 py-1' : 
-    size === 'lg' ? 'px-8 py-4' : 
+    size === 'lg' ? 'px-6 py-3' : 
     'px-4 py-2';
   
   // Special padding for purple-gradient variant
@@ -67,7 +67,7 @@ export function Button({
     'px-4 py-4';
   const textSizeClasses = 
     size === 'sm' ? 'text-sm' : 
-    size === 'lg' ? 'text-xl' : 
+    size === 'lg' ? 'text-lg' : 
     'text-base';
 
   // Glass variant size classes
@@ -448,13 +448,8 @@ export function Button({
       const textClasses = `text-center font-bold text-black ${textSizeClasses}`;
       return (
         <Pressable 
-<<<<<<< HEAD
           className={`${baseClasses} ${sizePaddingClasses} bg-primary ${disabledClasses} ${className}`}
           onPress={clickable ? handlePress : undefined}
-=======
-          className={`${baseClasses} rounded-full ${sizePaddingClasses} bg-primary ${disabledClasses} ${className}`}
-          onPress={handlePress}
->>>>>>> 98fd2b29e09e14b270f50d55bdcb5c669e8bbb87
           disabled={disabled}
           style={[style, { borderRadius: 8 }]}
         >
@@ -473,13 +468,8 @@ export function Button({
       const textClasses = `text-center font-bold text-white ${textSizeClasses}`;
       return (
         <Pressable 
-<<<<<<< HEAD
           className={`${baseClasses} ${sizePaddingClasses} bg-secondary ${disabledClasses} ${className}`}
           onPress={clickable ? handlePress : undefined}
-=======
-          className={`${baseClasses} rounded-full ${sizePaddingClasses} bg-secondary ${disabledClasses} ${className}`}
-          onPress={handlePress}
->>>>>>> 98fd2b29e09e14b270f50d55bdcb5c669e8bbb87
           disabled={disabled}
           style={[style, { borderRadius: 8 }]}
         >
@@ -498,13 +488,8 @@ export function Button({
       const textClasses = `text-center font-medium text-primary ${textSizeClasses}`;
       return (
         <Pressable 
-<<<<<<< HEAD
           className={`${baseClasses} ${sizePaddingClasses} bg-transparent border border-primary ${disabledClasses} ${className}`}
           onPress={clickable ? handlePress : undefined}
-=======
-          className={`${baseClasses} rounded-lg ${sizePaddingClasses} bg-transparent border border-primary ${disabledClasses} ${className}`}
-          onPress={handlePress}
->>>>>>> 98fd2b29e09e14b270f50d55bdcb5c669e8bbb87
           disabled={disabled}
           style={[style, { borderRadius: 8 }]}
         >
@@ -521,27 +506,6 @@ export function Button({
     }
     case 'ghost':
     default: {
-<<<<<<< HEAD
       const textClasses = `text-center font-medium text-primary ${textSizeClasses}`    }
-=======
-      const textClasses = `text-center font-medium text-primary ${textSizeClasses}`;
-      return (
-        <Pressable 
-          className={`${baseClasses} rounded-lg ${sizePaddingClasses} bg-transparent ${disabledClasses} ${className}`}
-          onPress={handlePress}
-          disabled={disabled}
-        >
-          {children ? children : title ? (
-            <Text className={`${textClasses} ${showArrow ? 'mr-2' : ''}`}>
-              {title}
-            </Text>
-          ) : null}
-          {showArrow && (
-            <Text className={`${textClasses} text-lg`}>→</Text>
-          )}
-        </Pressable>
-      );
-    }
->>>>>>> 98fd2b29e09e14b270f50d55bdcb5c669e8bbb87
   }
 }
