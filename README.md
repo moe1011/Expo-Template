@@ -23,6 +23,15 @@ A clean, modern, and customizable Expo template built with:
 - [Bun](https://bun.sh/) (recommended) or npm/yarn
 - [Expo CLI](https://docs.expo.dev/get-started/installation/)
 
+# PUSH CHANGES TO EAS AND APP STORE
+Run the following
+- bun i
+- bun prebuild
+- bun eas:ios
+IMPORTANT: you have to run this once its complete to push it to the store
+- [I cant find that command, however once the build is done it will show up in EAS when you click the 3 dots to see the command]
+
+
 ### Installation
 
 1. Clone this template:
