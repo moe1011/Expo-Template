@@ -1,0 +1,185 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Style Rules & Component Architecture
+
+## MANDATORY STYLING PRACTICES
+
+### NativeWind Usage
+- **ALWAYS use NativeWind classes for styling** - this is the primary styling method
+- **NEVER use StyleSheet.create()** unless absolutely necessary for complex animations or platform-specific styling
+- **NEVER use inline style objects** like `style={{backgroundColor: 'red'}}` - use NativeWind classes instead
+- Use `className` prop with NativeWind classes: `className="bg-red-500 p-4 rounded-lg"`
+
+### Responsive Design (MANDATORY)
+- **ALWAYS design mobile-first** starting with base styles for 'xs' screens
+- **ALWAYS use responsive prefixes** for larger screens:
+  - `xs`: 320px (Small phones - iPhone SE, older Android) - DEFAULT, no prefix needed
+  - `sm:`: 375px (Standard phones - iPhone 12/13/14)
+  - `md:`: 414px (Large phones - iPhone Plus, Pro Max)
+- Example: `className="p-2 sm:p-4 md:p-6 text-sm sm:text-base md:text-lg"`
+
+### UI Components (MANDATORY)
+- **ALWAYS use existing UI components** from `src/components/ui/` folder
+- **NEVER create custom buttons, inputs, or common UI elements** - extend existing ones
+- Available UI components: `Button.tsx`, `Input.tsx`, `GradientBackground.tsx`
+- Import pattern: `import { Button } from '@/components/ui/Button'`
+
+## COMPONENT ARCHITECTURE RULES
+
+### File Organization (MANDATORY)
+- **NEVER create files with more than 200 lines** - break into smaller components
+- **ALWAYS separate concerns** into different files:
+  - Logic hooks: `src/hooks/`
+  - Utility functions: `src/utils/`
+  - Type definitions: `src/types/`
+  - Constants: `src/constants/`
+  - Services/API: `src/services/`
+
+### Component Structure (MANDATORY)
+- **ALWAYS follow this component structure:**
+```tsx
+// 1. Imports (external libraries first, then internal)
+import React from 'react';
+import { View, Text } from 'react-native';
+import { useCustomHook } from '@/hooks/useCustomHook';
+import { Button } from '@/components/ui/Button';
+
+// 2. Types/Interfaces
+interface ComponentProps {
+  title: string;
+  onPress: () => void;
+}
+
+// 3. Component definition
+export const ComponentName: React.FC<ComponentProps> = ({ title, onPress }) => {
+  // 4. Hooks and state
+  const { data, loading } = useCustomHook();
+  
+  // 5. Event handlers
+  const handlePress = () => {
+    // logic here
+    onPress();
+  };
+  
+  // 6. Render
+  return (
+    <View className="flex-1 p-4">
+      <Text className="text-lg font-bold">{title}</Text>
+      <Button onPress={handlePress} title="Click me" />
+    </View>
+  );
+};
+```
+
+### Custom Hooks (MANDATORY)
+- **ALWAYS extract complex logic into custom hooks**
+- **NEVER put business logic directly in components**
+- Hook naming: `use[FeatureName]` (e.g., `useUserProfile`, `useGameAnalysis`)
+- Place hooks in: `src/hooks/[feature]/use[HookName].ts`
+- Example structure:
+```tsx
+export const useFeatureName = () => {
+  const [state, setState] = useState();
+  
+  const handleAction = useCallback(() => {
+    // logic here
+  }, [dependencies]);
+  
+  return {
+    state,
+    handleAction,
+    loading: false,
+    error: null
+  };
+};
+```
+
+### Utility Functions (MANDATORY)
+- **ALWAYS create utility functions for reusable logic**
+- **NEVER duplicate code** - extract into utilities
+- Place utilities in: `src/utils/[category]/[utilityName].ts`
+- Export as named exports: `export const formatCurrency = (amount: number) => ...`
+- **ALWAYS add TypeScript types** to utility functions
+
+### Component Decomposition (MANDATORY)
+- **BREAK DOWN large components** into smaller, focused components
+- **MAXIMUM 50 lines per component function** (excluding imports/types)
+- **CREATE sub-components** for repeated UI patterns
+- **USE composition over inheritance**
+- Example breakdown:
+```tsx
+// ❌ BAD - One large component
+const GameScreen = () => {
+  // 200+ lines of code
+};
+
+// ✅ GOOD - Decomposed components
+const GameScreen = () => (
+  <View>
+    <GameHeader />
+    <GameStats />
+    <GameActions />
+  </View>
+);
+
+const GameHeader = () => { /* focused component */ };
+const GameStats = () => { /* focused component */ };
+const GameActions = () => { /* focused component */ };
+```
+
+## STYLING BEST PRACTICES
+
+### Color System
+- **ALWAYS use Tailwind color palette** - no custom colors unless approved
+- **USE semantic color names**: `bg-primary-500`, `text-secondary-700`
+- **DEFINE custom colors** in `tailwind.config.js` if needed
+
+### Typography
+- **ALWAYS use consistent text sizing**: `text-xs`, `text-sm`, `text-base`, `text-lg`, `text-xl`
+- **USE font weights consistently**: `font-normal`, `font-medium`, `font-semibold`, `font-bold`
+- **APPLY responsive typography**: `text-sm sm:text-base md:text-lg`
+
+### Spacing & Layout
+- **USE consistent spacing scale**: `p-1`, `p-2`, `p-4`, `p-6`, `p-8`
+- **APPLY responsive spacing**: `p-2 sm:p-4 md:p-6`
+- **USE flexbox for layouts**: `flex-1`, `flex-row`, `justify-center`, `items-center`
+### Performance Considerations
+- **AVOID deep nesting** of View components (max 4 levels)
+- **USE FlatList** for long lists, never ScrollView with map
+- **IMPLEMENT lazy loading** for heavy components
+- **MEMOIZE expensive calculations** with useMemo/useCallback
+
+## FOLDER STRUCTURE ENFORCEMENT
+
+```
+src/
+├── components/
+│   ├── ui/                 # Reusable UI components
+│   ├── [feature]/          # Feature-specific components
+│   └── common/             # Shared components
+├── hooks/
+│   ├── [feature]/          # Feature-specific hooks
+│   └── common/             # Shared hooks
+├── utils/
+│   ├── [category]/         # Categorized utilities
+│   └── common/             # General utilities
+├── types/
+│   ├── [feature].ts        # Feature-specific types
+│   └── common.ts           # Shared types
+├── constants/
+│   └── [category].ts       # Categorized constants
+└── services/
+    └── [service].ts        # API services
+```
+
+## CODE QUALITY REQUIREMENTS
+
+- **ALWAYS use TypeScript** - no `any` types allowed
+- **ALWAYS add proper error handling** with try/catch blocks
+- **ALWAYS add loading and error states** to components
+- **NEVER leave console.log** statements in production code
+- **ALWAYS add JSDoc comments** to utility functions and hooks
+- **USE meaningful variable and function names** - no abbreviations
